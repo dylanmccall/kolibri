@@ -1,5 +1,6 @@
 import logging
 
+from argparse import SUPPRESS
 from django.core.management.base import BaseCommand
 from sqlalchemy.exc import DatabaseError
 
@@ -57,10 +58,19 @@ class Command(BaseCommand):
             help=channels_help_text,
         )
 
+        parser.add_argument(
+            "--database-only",
+            required=False,
+            action='store_true',
+            dest="database_only",
+            help=SUPPRESS,
+        )
+
     def handle(self, *args, **options):
 
         channel_import_mode = options["channel_import_mode"]
         channels_to_include = options["channels"]
+        database_only = options["database_only"]
 
         storage_channel_ids = get_channel_ids_for_content_dirs(
             get_all_content_dir_paths()
@@ -91,7 +101,8 @@ class Command(BaseCommand):
             if import_database:
                 self.import_channel_database(channel_id, disk_path)
 
-            self.annotate_channel(channel_id)
+            if not database_only:
+                self.annotate_channel(channel_id)
 
     def database_file_is_newer(self, channel_id, disk_path):
         try:
